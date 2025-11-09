@@ -95,12 +95,6 @@ BOARD_QTI_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor 
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
 
-# Init
-TARGET_PLATFORM_DEVICE_BASE := /devices/soc/
-
-# TWRP specific build flags
-TW_RELEASE_PRODUCT_NAME := $(subst $(space),_,$(PRODUCT_MODEL))
-
 # Extras
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
