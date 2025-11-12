@@ -14,7 +14,7 @@ on:
       DEVICE_TREE_URL:
         description: "Device tree url"
         required: true
-        default: "https://github.com/YuKongA/device_xiaomi_sm8750_TWRP"
+        default: "https://github.com/YuKongA/twrp_device_xiaomi_sm8750_thales"
       DEVICE_TREE_BRANCH:
         description: "Device tree branch"
         required: true
