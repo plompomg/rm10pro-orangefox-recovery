@@ -4,16 +4,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-DEVICE_PATH := device/xiaomi/sm8750_thales
+DEVICE_PATH := device/nubia/nx789j
 
 # Inherit from device.mk configuration
 $(call inherit-product, $(DEVICE_PATH)/device.mk)
 
 ## Device identifier
-PRODUCT_DEVICE := sm8750_thales
-PRODUCT_NAME := twrp_sm8750_thales
-PRODUCT_BRAND := Xiaomi
-PRODUCT_MANUFACTURER := Xiaomi
+PRODUCT_DEVICE := NX789J
+PRODUCT_NAME := twrp_NX789J
+PRODUCT_BRAND := nubia
+PRODUCT_MANUFACTURER := nubia
+PRODUCT_MODEL := RedMagic 10 Pro
 
 # Theme
 TW_STATUS_ICONS_ALIGN := center
