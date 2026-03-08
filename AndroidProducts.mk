@@ -5,4 +5,8 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/twrp_sm8750_thales.mk
+    $(LOCAL_DIR)/twrp_NX789J.mk
+
+COMMON_LUNCH_CHOICES := \
+    twrp_NX789J-eng \
+    twrp_NX789J-userdebug
