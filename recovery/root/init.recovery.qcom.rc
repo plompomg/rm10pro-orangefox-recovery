@@ -25,8 +25,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import /init.recovery.wifi.rc
-
 on init
     start vendor.boot-qti
     setprop prepdecrypt.setpatch true
@@ -48,9 +46,6 @@ on fs
     mkdir /tmp/persist 0775 shell system
     mount none /tmp/persist /mnt/vendor/persist bind rec
     install_keyring
-
-on post-fs
-    start odm.variant-script
 
 on boot
     setprop sys.usb.config adb
