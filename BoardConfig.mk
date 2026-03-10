@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+DEVICE_PATH := device/nubia/NX789J
+
 # Building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true
 
@@ -19,6 +21,7 @@ TARGET_ARCH_VARIANT := armv8-a
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_ABI2 :=
 TARGET_CPU_VARIANT := generic
+TARGET_CPU_VARIANT_RUNTIME := oryon
 
 # Power
 ENABLE_CPUSETS := true
@@ -26,32 +29,31 @@ ENABLE_SCHEDBOOST := true
 
 # Bootloader
 PRODUCT_PLATFORM := sun
-TARGET_BOOTLOADER_BOARD_NAME := $(PRODUCT_PLATFORM)
+TARGET_BOOTLOADER_BOARD_NAME := sun
 TARGET_NO_BOOTLOADER := true
 TARGET_USES_UEFI := true
 
 # Platform
-TARGET_BOARD_PLATFORM := nubia_sm8750
+TARGET_BOARD_PLATFORM := sun
 TARGET_BOARD_PLATFORM_GPU := qcom-adreno830
-QCOM_BOARD_PLATFORMS += nubia_sm8750
+QCOM_BOARD_PLATFORMS += sun
 
 # Kernel
-TARGET_KERNEL_ARCH            := arm64
-TARGET_KERNEL_HEADER_ARCH     := arm64
-BOARD_KERNEL_IMAGE_NAME       := Image
-BOARD_BOOT_HEADER_VERSION     := 4
-BOARD_KERNEL_PAGESIZE         := 4096
-TARGET_KERNEL_CLANG_COMPILE   := true
-TARGET_PREBUILT_KERNEL        := $(DEVICE_PATH)/prebuilt/kernel
-BOARD_MKBOOTIMG_ARGS          += --header_version $(BOARD_BOOT_HEADER_VERSION)
-BOARD_MKBOOTIMG_ARGS          += --pagesize $(BOARD_KERNEL_PAGESIZE)
+TARGET_KERNEL_ARCH := arm64
+TARGET_KERNEL_HEADER_ARCH := arm64
+BOARD_KERNEL_IMAGE_NAME := Image
+BOARD_BOOT_HEADER_VERSION := 4
+BOARD_KERNEL_PAGESIZE := 4096
+TARGET_KERNEL_CLANG_COMPILE := true
+TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS += --pagesize $(BOARD_KERNEL_PAGESIZE)
 
-# Ramdisk use lz4
+# Ramdisk
 BOARD_RAMDISK_USE_LZ4 := true
 
 # A/B
 BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
-
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     boot \
@@ -61,6 +63,7 @@ AB_OTA_PARTITIONS += \
     vbmeta \
     vbmeta_system \
     odm \
+    odm_dlkm \
     product \
     system \
     system_ext \
@@ -70,13 +73,16 @@ AB_OTA_PARTITIONS += \
 
 # Verified Boot
 BOARD_AVB_ENABLE := true
+BOARD_AVB_ALGORITHM := SHA256_RSA4096
+BOARD_AVB_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_ROLLBACK_INDEX_LOCATION := 1
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 3
 
 # Partitions
 BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 
-# Workaround for error copying vendor files to recovery ramdisk
 TARGET_COPY_OUT_VENDOR := vendor
-
 TARGET_COPY_OUT_ODM := odm
 BOARD_ODMIMAGE_FILE_SYSTEM_TYPE := ext4
 BOARD_USES_VENDOR_DLKMIMAGE := true
@@ -89,11 +95,18 @@ BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 100663296
 BOARD_DTBOIMG_PARTITION_SIZE := 25165824
 BOARD_INIT_BOOT_IMAGE_PARTITION_SIZE := 8388608
 
-# Dynamic Partition
+# Dynamic Partitions
 BOARD_SUPER_PARTITION_SIZE := 17179869184
 BOARD_SUPER_PARTITION_GROUPS := nubia_dynamic_partitions
 BOARD_NUBIA_DYNAMIC_PARTITIONS_SIZE := 17175674880
-BOARD_NUBIA_DYNAMIC_PARTITIONS_PARTITION_LIST := system system_ext product vendor vendor_dlkm odm
+BOARD_NUBIA_DYNAMIC_PARTITIONS_PARTITION_LIST := \
+    system \
+    system_ext \
+    product \
+    vendor \
+    vendor_dlkm \
+    odm \
+    odm_dlkm
 
 # File systems
 TARGET_USERIMAGES_USE_EXT4 := true
@@ -120,7 +133,7 @@ PLATFORM_SECURITY_PATCH := 2099-12-31
 VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 BOOT_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
-# Tool
+# Tools
 TW_INCLUDE_7ZA := true
 TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_RESETPROP := true
@@ -141,7 +154,7 @@ RECOVERY_BINARY_SOURCE_FILES += $(TARGET_OUT_EXECUTABLES)/strace
 # Fastbootd
 TW_INCLUDE_FASTBOOTD := true
 
-# Other TWRP Configurations
+# TWRP Configuration
 TW_THEME := portrait_hdpi
 TW_FRAMERATE := 120
 RECOVERY_SDCARD_ON_DATA := true
@@ -158,17 +171,17 @@ TW_INCLUDE_FUSE_NTFS := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
 TW_MAX_BRIGHTNESS := 2047
-TW_EXTRA_LANGUAGES := true
 TW_DEFAULT_BRIGHTNESS := 250
+TW_EXTRA_LANGUAGES := true
 TW_EXCLUDE_APEX := true
 TW_HAS_EDL_MODE := false
 TW_SUPPORT_INPUT_AIDL_HAPTICS := true
-TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "IVibrator/vibratorfeature"
+TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := "android.hardware.vibrator.IVibrator/vibratorfeature"
 TW_SUPPORT_INPUT_AIDL_HAPTICS_FIX_OFF := true
 TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
 TW_SCREEN_BLANK_ON_BOOT := true
 TW_LOAD_VENDOR_MODULES := "drm_display_helper.ko msm_drm.ko panel_event_notifier.ko zte_tpd.ko smartpa_stat_dlkm.ko aw882xx_dlkm.ko aw9620x.ko"
 TW_LOAD_VENDOR_MODULES_EXCLUDE_GKI := true
 TW_LOAD_PREBUILT_MODULES_AT_FIRST := true
-TW_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp" # CPU-0-0-0
+TW_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp"
 TW_BACKUP_EXCLUSIONS := /data/fonts
