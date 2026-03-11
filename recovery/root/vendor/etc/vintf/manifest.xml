@@ -20,22 +20,17 @@
         <fqname>IGatekeeper/default</fqname>
     </hal>
 
-    <!-- Secure Element - ST54L NFC/SE chip present on NX789J -->
+    <!-- Secure Element - UICC-based, served by qcril telephony stack -->
     <hal format="aidl">
         <name>android.hardware.secure_element</name>
-        <fqname>ISecureElement/eSE1</fqname>
+        <fqname>ISecureElement/SIM1</fqname>
+        <fqname>ISecureElement/SIM2</fqname>
     </hal>
 
-    <!-- NFC - ST NFC controller present on NX789J -->
+    <!-- NFC - ST21 NFC controller (ST NFC stack) -->
     <hal format="aidl">
         <name>android.hardware.nfc</name>
         <fqname>INfc/default</fqname>
-    </hal>
-
-    <!-- NXP NFC vendor extension - present per proprietary-files.txt -->
-    <hal format="aidl">
-        <name>vendor.nxp.nxpnfc_aidl</name>
-        <fqname>INxpNfc/default</fqname>
     </hal>
 
 </manifest>

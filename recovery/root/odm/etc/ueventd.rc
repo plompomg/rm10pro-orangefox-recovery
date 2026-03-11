@@ -65,17 +65,6 @@ external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@1/firmwa
 external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@1/firmware/oemvm.b04 system "/vendor/bin/vmmgr -r"
 external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@1/firmware/oemvm.b05 system "/vendor/bin/vmmgr -r"
 
-# xiaomi display feature
-subsystem mi_display
-    devname uevent_devpath
-    dirname /dev/mi_display
-
-# xiaomi display feature
-/dev/mi_display/*         0666   root       graphics
-
-# xiaomi ntag
-/dev/fm-ntag              0660   nfc        nfc
-/dev/nxp-ntag             0660   nfc        nfc
-
- hang_task
-/dev/Monitor_Hang	0660	system	system
+# ST NFC
+/dev/st54j              0660   nfc        nfc
+/dev/st21nfc              0660   nfc        nfc

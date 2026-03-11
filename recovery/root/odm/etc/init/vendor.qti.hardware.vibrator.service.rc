@@ -1,0 +1,24 @@
+on late-fs
+    # qcom-haptics
+    chmod 0666 /sys/class/qcom-haptics/lra_calibration
+    chmod 0666 /sys/class/qcom-haptics/lra_impedance
+    chmod 0666 /dev/qcom_haptic
+    chmod 0666 /mnt/vendor/persist/sensors/registry/registry/sns_offhand
+    chown system system /mnt/vendor/persist/sensors/registry/registry/sns_offhand
+    chown system system /dev/qcom_haptic
+    chown system system /sys/class/qcom-haptics/lra_frequency_hz
+    chmod 0666 /sys/class/qcom-haptics/lra_frequency_hz
+
+    # cal-file directory
+    mkdir /mnt/vendor/persist/haptics 0755 system system
+
+service odm.vibratorfeature-service /vendor/bin/hw/vendor.qti.hardware.vibrator.service
+    class hal
+    user root
+    group root input audio
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/odm/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+on property:sys.boot_completed=1
+    setprop vendor.haptic.calibrate.done 1

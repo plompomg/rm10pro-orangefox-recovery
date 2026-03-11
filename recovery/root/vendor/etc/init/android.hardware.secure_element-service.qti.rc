@@ -1,9 +1,0 @@
-on init
-    start vendor.secure_element
-
-service vendor.secure_element /vendor/bin/hw/android.hardware.secure_element-service.qti
-    class hal
-    user root
-    group nfc root
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/odm/lib64:/system/lib64:/sbin
-    seclabel u:r:recovery:s0

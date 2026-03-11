@@ -1,7 +1,0 @@
-service odm.se_omapi /odm/bin/se_omapi
-    class hal
-    user root
-    group root
-    interface aidl android.se.omapi.ISecureElementService/default
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/odm/lib64:/system/lib64:/sbin
-    seclabel u:r:recovery:s0
