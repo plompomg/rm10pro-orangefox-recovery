@@ -45,7 +45,6 @@ on fs
     mkdir /mnt/vendor/persist 0775 shell system
     mkdir /tmp/persist 0775 shell system
     mount none /tmp/persist /mnt/vendor/persist bind rec
-    install_keyring
 
 on boot
     setprop sys.usb.config adb
