@@ -8,10 +8,10 @@
 - [X] Fastbootd
 - [X] Flashing
 - [X] MTP
-- [X] Sideload
+- [X] Fan
+- [ ] Fan LED - WIP
 - [X] USB-OTG
-- [X] Vibrator
-- [X] WLAN
+- [ ] Vibrator - WIP
 
 ## Build it yourself
 * [TWRP-Test/platform_manifest_twrp_aosp](https://github.com/TWRP-Test/platform_manifest_twrp_aosp)
