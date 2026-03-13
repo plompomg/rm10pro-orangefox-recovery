@@ -83,3 +83,8 @@ service vendor.qti.vibrator /vendor/bin/hw/vendor.qti.hardware.vibrator.service
     setenv RICHTAP_DEVICE_PATH /dev/awinic_haptic
     setenv ENV_RICHTAP_CONFIG_PATH /odm/etc/aac_richtap.config
     seclabel u:r:recovery:s0
+
+on post-fs
+    write /sys/kernel/fan/fan_enable 1
+    write /sys/kernel/fan/fan_speed_level 1
+    write /sys/class/leds/aw22xxx_led/trigger battery-charging-or-full
