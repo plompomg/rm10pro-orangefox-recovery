@@ -72,3 +72,4 @@ external_firmware_handler /devices/platform/soc/soc:gh-secure-vm-loader@1/firmwa
 # Goodix THP touch
 /dev/thp                  0666   system     system   u:object_r:gx_fpd_device:s0
 /dev/input_agent          0666   system     system   u:object_r:gx_fpd_device:s0
+/dev/awinic_haptic             0666   system     system
