@@ -26,6 +26,8 @@
 #
 
 on init
+    stop keystore2
+    stop vendor.keymint-qti
     start vendor.boot-qti
     setprop prepdecrypt.setpatch true
 
@@ -77,12 +79,12 @@ on post-fs-data
     start vendor.qti.vibrator
 
 service vendor.qti.vibrator /vendor/bin/hw/vendor.qti.hardware.vibrator.service
-    class hal
-    user system
-    group system input
+#    class hal
+#    user system
+#    group system input
     setenv RICHTAP_DEVICE_PATH /dev/awinic_haptic
-    setenv ENV_RICHTAP_CONFIG_PATH /odm/etc/aac_richtap.config
-    seclabel u:r:recovery:s0
+#    setenv ENV_RICHTAP_CONFIG_PATH /odm/etc/aac_richtap.config
+#    seclabel u:r:recovery:s0
 
 on post-fs
     write /sys/kernel/fan/fan_enable 1

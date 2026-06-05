@@ -11,7 +11,7 @@ $(call inherit-product, $(DEVICE_PATH)/device.mk)
 
 # Device identifier
 PRODUCT_DEVICE := NX789J
-PRODUCT_NAME := twrp_NX789J
+PRODUCT_NAME := orangefox_NX789J
 PRODUCT_BRAND := nubia
 PRODUCT_MANUFACTURER := nubia
 PRODUCT_MODEL := RedMagic 10 Pro
