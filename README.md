@@ -1,5 +1,7 @@
 # OrangeFox Recovery — Nubia RedMagic 10 Pro (NX789J)
 
+# there is currently a bug where the ui takes around 8 seconds to load, its in the progress of being fixed
+
 > First working OrangeFox build for the RedMagic 10 Pro, including functional decryption.
 
 ![OrangeFox](https://img.shields.io/badge/OrangeFox-14.1-orange?style=flat-square)
