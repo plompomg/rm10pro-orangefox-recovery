@@ -61,8 +61,11 @@ jobs:
 
       - name: Set up ccache
         run: |
+          mkdir -p /home/runner/ccache
           echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)"
+          echo "CCACHE_DIR=/home/runner/ccache" >> $GITHUB_ENV
+>> $GITHUB_ENV
           ccache -M 10G
 
       - name: Cache ccache
