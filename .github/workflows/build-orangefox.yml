@@ -28,11 +28,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Check out device tree
-        uses: actions/checkout@v4
-        with:
-          path: device/nubia/NX789J
-
       - name: Free up disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
@@ -86,8 +81,8 @@ jobs:
 
       - name: Place device tree
         run: |
-          mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
-          cp -r $GITHUB_WORKSPACE/device/nubia/NX789J ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
+           mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
+          git clone https://github.com/plompomg/rm10pro-orangefox-recovery ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
 
       - name: Build OrangeFox
         run: |
