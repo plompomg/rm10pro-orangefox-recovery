@@ -81,7 +81,7 @@ jobs:
 
       - name: Place device tree
         run: |
-           mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
+          mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
           git clone https://github.com/plompomg/rm10pro-orangefox-recovery ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
 
       - name: Build OrangeFox
