@@ -139,7 +139,7 @@ adb reboot recovery
 
 - [OrangeFox Recovery Project](https://orangefox.download)
 - [TeamWin (TWRP)](https://twrp.me) — original device tree base
-- Converted and fixed by **YOUR_NAME**
+- Converted and fixed by gnorpy on telegram and 𓆉 on discord
 
 ---
 
