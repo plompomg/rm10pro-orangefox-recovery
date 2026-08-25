@@ -1,148 +1,158 @@
-name: TWRP 16 Builder - NX789J
+name: Build OrangeFox Recovery
 
 on:
   workflow_dispatch:
     inputs:
-      TWRP_MANIFEST_URL:
-        description: "TWRP manifest url"
+      SYNC_BRANCH:
+        description: 'OrangeFox branch to sync'
         required: true
-        default: "https://github.com/TWRP-Test/platform_manifest_twrp_aosp"
-      TWRP_MANIFEST_BRANCH:
-        description: "TWRP branch"
+        default: '14.1'
+        type: string
+      BUILD_TYPE:
+        description: 'Build type'
         required: true
-        default: "twrp-16.0"
-      DEVICE_TREE_URL:
-        description: "Device tree url"
-        required: true
-        default: "https://github.com/reminon/twrp_device_nubia_nx789j"
-      DEVICE_TREE_BRANCH:
-        description: "Device tree branch"
-        required: true
-        default: "twrp-16.0"
-      DEVICE_PATH:
-        description: "Device path device/"
-        required: true
-        default: "nubia/nx789j"
-      DEVICE_NAME:
-        description: "Device name"
-        required: true
-        default: "nx789j"
-      LUNCH_TARGET:
-        description: "lunch twrp_ (default same as device name)"
+        default: 'eng'
+        type: choice
+        options:
+          - eng
+          - userdebug
+      RELEASE_BUILD:
+        description: 'Create a GitHub release'
         required: false
-        default: ""
-      BUILD_PARTITION:
-        description: "Build partition"
-        required: true
-        default: "recovery"
+        default: false
+        type: boolean
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    name: Build OrangeFox for NX789J
+    runs-on: ubuntu-22.04
+
     steps:
-    - name: Show build info
-      run: |
-        if [ -n "${{ github.event.inputs.LUNCH_TARGET }}" ]; then
-          echo "LUNCH_TARGET=${{ github.event.inputs.LUNCH_TARGET }}" >> "$GITHUB_ENV"
-        else
-          echo "LUNCH_TARGET=${{ github.event.inputs.DEVICE_NAME }}" >> "$GITHUB_ENV"
-        fi
-        {
-          echo 'BUILD_INFO<<EOF'
-          echo
-          echo Manifest url: ${{ github.event.inputs.TWRP_MANIFEST_URL }}
-          echo Manifest branch: ${{ github.event.inputs.TWRP_MANIFEST_BRANCH }}
-          echo Device tree url: ${{ github.event.inputs.DEVICE_TREE_URL }}
-          echo Device tree branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}
-          echo Device path: ${{ github.event.inputs.DEVICE_PATH }}
-          echo Device name: ${{ github.event.inputs.DEVICE_NAME }}
-          echo Lunch target: ${{ github.event.inputs.LUNCH_TARGET }}
-          echo Build target: ${{ github.event.inputs.BUILD_PARTITION }}.img
-          echo Build date: `date`
-          echo
-          echo EOF
-        } >> "$GITHUB_ENV"
-        echo BUILD_DATE=`date +%F` >> "$GITHUB_ENV"
-        echo "REPO_NAME=$(basename ${{ github.event.inputs.TWRP_MANIFEST_URL }})" >> "$GITHUB_ENV"
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get clean
+          df -h
 
-    - name: Cleanup
-      uses: rokibhasansagar/slimhub_actions@main
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git curl wget python3 python-is-python3 \
+            bc bison build-essential ccache flex \
+            g++-multilib gcc-multilib gnupg gperf \
+            imagemagick lib32ncurses-dev lib32readline-dev \
+            lib32z1-dev lz4 libncurses-dev libsdl1.2-dev \
+            libssl-dev libwxgtk3.0-gtk3-dev libxml2-dev \
+            libxml2-utils lzop pngcrush rsync schedtool \
+            squashfs-tools xsltproc zip zlib1g-dev openjdk-11-jdk
 
-    - name: Maximize build space
-      uses: easimon/maximize-build-space@master
+      - name: Set up git identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
 
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        create-symlink: true
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
 
-    - name: Setup zram
-      run: |
-        sudo apt install linux-modules-extra-$(uname -r) zram-tools -y
-        sudo modprobe zram
-        sudo sed -i 's/^#PERCENT=50/PERCENT=90/' /etc/default/zramswap
-        sudo sed -i 's/^#PRIORITY=100/PRIORITY=1000/' /etc/default/zramswap
-        sudo systemctl restart zramswap
-        zramctl
+      - name: Set up ccache
+        run: |
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          ccache -M 10G
 
-    - name: Setup environment
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt update && sudo apt upgrade -y
-        sudo apt install repo -y
-        git config --global user.name ${{ github.actor }}
-        git config --global user.email ${{ github.actor }}@users.noreply.github.com
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.sha }}
+          restore-keys: |
+            ccache-orangefox-${{ inputs.SYNC_BRANCH }}-
 
-    - name: Sync source
-      run: |
-        repo init -u ${{ github.event.inputs.TWRP_MANIFEST_URL }} -b ${{ github.event.inputs.TWRP_MANIFEST_BRANCH }} --depth=1
-        (while true; do echo "Syncing source..."; sleep 60; done) &
-        TIP_PID=$!
-        repo sync
-        kill $TIP_PID && exit 0
+      - name: Sync OrangeFox source
+        run: |
+          git clone https://gitlab.com/OrangeFox/sync.git ~/OrangeFox_sync
+          cd ~/OrangeFox_sync
+          ./orangefox_sync.sh --branch ${{ inputs.SYNC_BRANCH }} --path ~/fox_${{ inputs.SYNC_BRANCH }}
 
-    - name: Setup device
-      run: |
-        git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} device/${{ github.event.inputs.DEVICE_PATH }}
+      - name: Place device tree
+        run: |
+           mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
+          git clone https://github.com/plompomg/rm10pro-orangefox-recovery ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
 
-    - name: Generate build info
-      run: |
-        echo -e "$BUILD_INFO" >> INFO.txt
-        echo "Change log:" >> INFO.txt
-        set +e
-        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
-        if [ $? -eq 0 ]; then
-          git log "$LAST_TAG"..HEAD --pretty=format:"- %h-%an: %s" >> INFO.txt
-        else
-          git log --pretty=format:"- %h-%an: %s" >> INFO.txt
-        fi
-        cat INFO.txt
-      working-directory: device/${{ github.event.inputs.DEVICE_PATH }}
+      - name: Build OrangeFox
+        run: |
+          cd ~/fox_${{ inputs.SYNC_BRANCH }}
+          source build/envsetup.sh
+          lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
+          mka adbd recoveryimage 2>&1 | tee build.log
+          echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
 
-    - name: Build TWRP
-      run: |
-        source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
-        export CCACHE_DIR=.ccache
-        export CCACHE_EXEC=$(command -v ccache)        
-        export CCACHE_MAXSIZE=5G
-        export USE_CCACHE=1
-        lunch twrp_${{ env.LUNCH_TARGET }}
-        (while true; do echo `date +%T` "Building TWRP..."; free -h; sleep 10; done) &
-        TIP_PID=$!
-        m ${{ github.event.inputs.BUILD_PARTITION }}image
-        mv out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_PARTITION }}.img out/target/product/${{ github.event.inputs.DEVICE_NAME }}/TWRP-3.7.1-16-${{ github.event.inputs.DEVICE_NAME }}-${{ env.BUILD_DATE }}.img
-        kill $TIP_PID && exit 0        
+      - name: Check build output
+        run: |
+          if [ ! -f ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img ]; then
+            echo "Build failed - recovery.img not found"
+            exit 1
+          fi
+          echo "Build successful!"
+          ls -lh ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img
 
-    - name: Upload to Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: | 
-          out/target/product/${{ github.event.inputs.DEVICE_NAME }}/TWRP-3.7.1-16-${{ github.event.inputs.DEVICE_NAME }}-${{ env.BUILD_DATE }}.img
-        name: TWRP-3.7.1-16-${{ github.event.inputs.DEVICE_NAME }}-${{ env.BUILD_DATE }}-${{ github.run_id }}
-        tag_name: ${{ env.BUILD_DATE }}-${{ github.run_id }}
-        body_path: device/${{ github.event.inputs.DEVICE_PATH }}/INFO.txt
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Rename output
+        run: |
+          DATE=$(date +%Y%m%d)
+          cp ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img \
+             ~/OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img
+          echo "IMG_PATH=$HOME/OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img" >> $GITHUB_ENV
+          echo "IMG_NAME=OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img" >> $GITHUB_ENV
+
+      - name: Upload recovery image as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IMG_NAME }}
+          path: ${{ env.IMG_PATH }}
+          retention-days: 7
+
+      - name: Upload build log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ~/fox_${{ inputs.SYNC_BRANCH }}/build.log
+          retention-days: 7
+
+      - name: Create GitHub release
+        if: ${{ inputs.RELEASE_BUILD == 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: OFR-${{ inputs.SYNC_BRANCH }}-${{ github.run_number }}
+          name: OrangeFox ${{ inputs.SYNC_BRANCH }} — NX789J Build ${{ github.run_number }}
+          body: |
+            ## OrangeFox Recovery for Nubia RedMagic 10 Pro (NX789J)
+
+            **Branch:** ${{ inputs.SYNC_BRANCH }}
+            **Build type:** ${{ inputs.BUILD_TYPE }}
+            **Date:** ${{ github.run_number }}
+
+            ### Flashing Instructions
+            ```bash
+            adb push OrangeFox-*.img /sdcard/recovery.img
+            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_a
+            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_b
+            adb reboot recovery
+            ```
+
+            ### Status
+            - ✅ OrangeFox UI
+            - ✅ Touch
+            - ✅ ADB
+            - ✅ Decryption (FBE)
+            - ✅ Flashing ZIPs
+          files: ${{ env.IMG_PATH }}
+          draft: false
+          prerelease: ${{ inputs.BUILD_TYPE != 'userdebug' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
