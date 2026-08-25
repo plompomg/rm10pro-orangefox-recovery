@@ -92,7 +92,7 @@ jobs:
           cd ~/fox_${{ inputs.SYNC_BRANCH }}
           source build/envsetup.sh
           lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
-          mka adbd recoveryimage 2>&1 | tee build.log
+          make -j4 adbd recoveryimage 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
 
       - name: Check build output
