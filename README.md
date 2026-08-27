@@ -10,9 +10,6 @@
 ![Decryption](https://img.shields.io/badge/Decryption-Working-brightgreen?style=flat-square)
 
 ---
-
-# "Dont use the github action for now cause its broken and soon to be fixed" 
-
 ## Device Specifications
 
 | Feature | Details |
