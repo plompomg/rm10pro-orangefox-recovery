@@ -36,7 +36,7 @@
 | Backup / Restore | ✅ Working                             |
 | Fastbootd        | ✅ Working                             |
 | USB OTG          | ✅ Working                             |
-| Vibration        | ⚠️ Disabled in recovery (not needed) |
+| Fan(maybe adjustable)      | 🛠 in progress |
 
 ---
 
