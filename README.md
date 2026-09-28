@@ -1,43 +1,42 @@
 # OrangeFox Recovery — Nubia RedMagic 10 Pro (NX789J)
 
-# there is currently a bug where the ui takes around 8 seconds to load, its in the progress of being fixed
-
 > First working OrangeFox build for the RedMagic 10 Pro, including functional decryption.
 
 ![OrangeFox](https://img.shields.io/badge/OrangeFox-14.1-orange?style=flat-square)
-![Device](https://img.shields.io/badge/Device-RedMagic%2010%20Pro-red?style=flat-square)
+![Device](<https://img.shields.io/badge/Device-RedMagic%2010%20Pro-red?style=flat-square>)
 ![Status](https://img.shields.io/badge/Status-Working-brightgreen?style=flat-square)
 ![Decryption](https://img.shields.io/badge/Decryption-Working-brightgreen?style=flat-square)
 
 ---
+
 ## Device Specifications
 
-| Feature | Details |
-|---------|---------|
-| Device | Nubia RedMagic 10 Pro |
-| Codename | NX789J |
-| SoC | Snapdragon 8 Elite (sun) |
-| Architecture | arm64 |
-| A/B Partitions | Yes |
-| Dynamic Partitions | Yes |
-| Encryption | FBE (fscrypt policy 2) |
+| Feature            | Details                               |
+| ------------------ | ------------------------------------- |
+| Device             | Nubia RedMagic 10 Pro                 |
+| Codename           | NX789J                                |
+| SoC                | Snapdragon 8 Elite (sun)              |
+| Architecture       | arm64                                 |
+| A/B Partitions     | Yes                                   |
+| Dynamic Partitions | Yes                                   |
+| Encryption         | FBE (fscrypt policy 2)                |
 | Recovery Partition | Yes (`recovery_a` / `recovery_b`) |
 
 ---
 
 ## Status
 
-| Feature | Status |
-|---------|--------|
-| OrangeFox UI | ✅ Working |
-| Touch | ✅ Working |
-| ADB | ✅ Working |
-| Decryption (FBE) | ✅ Working |
-| Flashing ZIPs | ✅ Working |
-| Backup / Restore | ✅ Working |
-| Fastbootd | ✅ Working |
-| USB OTG | ✅ Working |
-| Vibration | ⚠️ Disabled in recovery (not needed) |
+| Feature          | Status                                 |
+| ---------------- | -------------------------------------- |
+| OrangeFox UI     | ✅ Working                             |
+| Touch            | ✅ Working                             |
+| ADB              | ✅ Working                             |
+| Decryption (FBE) | ✅ Working                             |
+| Flashing ZIPs    | ✅ Working                             |
+| Backup / Restore | ✅ Working                             |
+| Fastbootd        | ✅ Working                             |
+| USB OTG          | ✅ Working                             |
+| Vibration        | ⚠️ Disabled in recovery (not needed) |
 
 ---
 
@@ -102,6 +101,7 @@ mka adbd recoveryimage
 ```
 
 Output will be at:
+
 ```
 out/target/product/NX789J/recovery.img
 ```
