@@ -80,7 +80,7 @@ jobs:
         run: |
           git clone https://gitlab.com/OrangeFox/sync.git ~/OrangeFox_sync
           cd ~/OrangeFox_sync
-          ./orangefox_sync.sh --branch ${{ inputs.SYNC_BRANCH }} --path ~/fox_${{ inputs.SYNC_BRANCH }}
+          ./orangefox_sync.sh --branch ${{ inputs.SYNC_BRANCH }} --path ~/fox_${{ inputs.SYNC_BRANCH }} --jobs 8 --shallow-clone
 
       - name: Place device tree
         run: |
