@@ -110,7 +110,7 @@ out/target/product/NX789J/recovery.img
 
 ## Flashing
 
-> ⚠️ This device does **not** support `fastboot boot` or `fastboot flash recovery`. Use the method below.
+### ⚠️ This device does **not** support `fastboot boot` or `fastboot flash recovery`. Use the method below.
 
 ### From a running recovery (TWRP or OrangeFox)
 
