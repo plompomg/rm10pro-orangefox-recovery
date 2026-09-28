@@ -88,7 +88,7 @@ cd ~/OrangeFox_sync
 
 ```bash
 mkdir -p ~/fox_14.1/device/nubia
-git clone https://github.com/YOUR_USERNAME/android_device_nubia_NX789J ~/fox_14.1/device/nubia/NX789J
+git clone https://github.com/plompomg/rm10pro-orangefox-recovery ~/fox_14.1/device/nubia/NX789J
 ```
 
 ### Build
