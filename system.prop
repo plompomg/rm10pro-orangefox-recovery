@@ -8,6 +8,7 @@ ro.boot.dynamic_partitions=true
 
 # Battery Property
 ro.charger.enable_suspend=1
+ro.hardware.health=default
 
 # USB
 vendor.usb.configfs=1
