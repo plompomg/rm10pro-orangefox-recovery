@@ -175,6 +175,8 @@ TW_CUSTOM_CPU_TEMP_PATH := "/sys/class/thermal/thermal_zone1/temp"
 TW_BACKUP_EXCLUSIONS := /data/fonts
 TW_HAS_USB_OTG := true
 TW_CUSTOM_BATTERY_PATH := "/sys/class/power_supply/battery"
+TW_BATTERY_SYSFS_WAIT_SECONDS := 0
+TW_CUSTOM_BATTERY_CAPACITY := "/sys/class/power_supply/battery/capacity"
 
 # OrangeFox specific
 OF_MAINTAINER := YourName
