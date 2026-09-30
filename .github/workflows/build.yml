@@ -1,0 +1,186 @@
+name: Build OrangeFox Recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      SYNC_BRANCH:
+        description: OrangeFox branch to sync
+        required: true
+        default: "14.1"
+        type: string
+      BUILD_TYPE:
+        description: Build type
+        required: true
+        default: eng
+        type: choice
+        options:
+          - eng
+          - userdebug
+      RELEASE_BUILD:
+        description: Create a GitHub release
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    name: Build OrangeFox for NX789J
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360          # recovery builds can take a long time
+
+    steps:
+      # ── 1. Free disk space ──────────────────────────────────────────────
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost /usr/share/swift
+          sudo apt-get clean
+          df -h
+
+      # ── 2. Install dependencies (includes ccache) ───────────────────────
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git curl wget python3 python-is-python3 \
+            bc bison build-essential ccache flex \
+            g++-multilib gcc-multilib gnupg gperf \
+            imagemagick lib32ncurses-dev lib32readline-dev \
+            lib32z1-dev lz4 libncurses-dev libsdl1.2-dev \
+            libssl-dev libwxgtk3.0-gtk3-dev libxml2-dev \
+            libxml2-utils lzop pngcrush rsync schedtool \
+            squashfs-tools xsltproc zip zlib1g-dev openjdk-11-jdk
+
+      # ── 3. Git identity ─────────────────────────────────────────────────
+      - name: Set up git identity
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      # ── 4. Install repo tool ────────────────────────────────────────────
+      - name: Install repo tool
+        run: |
+          mkdir -p \~/bin
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > \~/bin/repo
+          chmod a+x \~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      # ── 5. Setup ccache (FIXED) ─────────────────────────────────────────
+      - name: Set up ccache
+        run: |
+          mkdir -p /home/runner/ccache
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          echo "CCACHE_DIR=/home/runner/ccache" >> $GITHUB_ENV
+          ccache -M 10G
+          ccache -z          # reset stats for this run
+          ccache -s
+
+      # ── 6. Cache ccache ─────────────────────────────────────────────────
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/ccache
+          key: ccache-orangefox-\( {{ inputs.SYNC_BRANCH }}- \){{ runner.os }}
+          restore-keys: |
+            ccache-orangefox-${{ inputs.SYNC_BRANCH }}-
+            ccache-orangefox-
+
+      # ── 7. Sync OrangeFox source ────────────────────────────────────────
+      - name: Sync OrangeFox source
+        run: |
+          git clone https://gitlab.com/OrangeFox/sync.git \~/OrangeFox_sync
+          cd \~/OrangeFox_sync
+          ./orangefox_sync.sh \
+            --branch ${{ inputs.SYNC_BRANCH }} \
+            --path \~/fox_${{ inputs.SYNC_BRANCH }} \
+            --jobs $(nproc) \
+            --shallow-clone
+
+      # ── 8. Place device tree ────────────────────────────────────────────
+      - name: Place device tree
+        run: |
+          mkdir -p \~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
+          git clone https://github.com/plompomg/rm10pro-orangefox-recovery \
+            \~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
+
+      # ── 9. Build ────────────────────────────────────────────────────────
+      - name: Build OrangeFox
+        run: |
+          cd \~/fox_${{ inputs.SYNC_BRANCH }}
+          source build/envsetup.sh
+          lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
+          make -j$(nproc) adbd recoveryimage 2>&1 | tee build.log
+          echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+
+      # ── 10. Verify output ───────────────────────────────────────────────
+      - name: Check build output
+        run: |
+          RECOVERY=\~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img
+          if [ ! -f "$RECOVERY" ]; then
+            echo "❌ Build failed – recovery.img not found"
+            exit 1
+          fi
+          echo "✅ Build successful!"
+          ls -lh "$RECOVERY"
+
+      # ── 11. Rename output ───────────────────────────────────────────────
+      - name: Rename output
+        run: |
+          DATE=$(date +%Y%m%d)
+          IMG_NAME="OrangeFox-\( {{ inputs.SYNC_BRANCH }}-NX789J- \){DATE}.img"
+          cp \~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img \
+             \~/${IMG_NAME}
+          echo "IMG_PATH=\( HOME/ \){IMG_NAME}" >> $GITHUB_ENV
+          echo "IMG_NAME=${IMG_NAME}" >> $GITHUB_ENV
+
+      # ── 12. Upload recovery image ───────────────────────────────────────
+      - name: Upload recovery image as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.IMG_NAME }}
+          path: ${{ env.IMG_PATH }}
+          retention-days: 7
+
+      # ── 13. Upload build log (always) ───────────────────────────────────
+      - name: Upload build log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: \~/fox_${{ inputs.SYNC_BRANCH }}/build.log
+          retention-days: 7
+
+      # ── 14. Create GitHub Release (optional) ────────────────────────────
+      - name: Create GitHub release
+        if: ${{ inputs.RELEASE_BUILD == true }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: OFR-\( {{ inputs.SYNC_BRANCH }}- \){{ github.run_number }}
+          name: OrangeFox ${{ inputs.SYNC_BRANCH }} — NX789J Build ${{ github.run_number }}
+          body: |
+            ## OrangeFox Recovery for Nubia RedMagic 10 Pro (NX789J)
+
+            **Branch:** ${{ inputs.SYNC_BRANCH }}
+            **Build type:** ${{ inputs.BUILD_TYPE }}
+            **Run:** ${{ github.run_number }}
+
+            ### Flashing Instructions
+            ```bash
+            adb push OrangeFox-*.img /sdcard/recovery.img
+            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_a
+            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_b
+            adb reboot recovery
+            ```
+
+            ### Status
+            - ✅ OrangeFox UI
+            - ✅ Touch
+            - ✅ ADB
+            - ✅ Decryption (FBE)
+            - ✅ Flashing ZIPs
+          files: ${{ env.IMG_PATH }}
+          draft: false
+          prerelease: ${{ inputs.BUILD_TYPE != 'userdebug' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
