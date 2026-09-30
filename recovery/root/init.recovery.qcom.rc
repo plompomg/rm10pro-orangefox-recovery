@@ -28,6 +28,7 @@
 on init
     stop keystore2
     stop vendor.keymint-qti
+    stop vendor.health-default
     start vendor.boot-qti
     setprop prepdecrypt.setpatch true
 
@@ -56,9 +57,9 @@ on property:twrp.modules.loaded=true
     mkdir /firmware
     mount vfat /dev/block/bootdevice/by-name/modem${ro.boot.slot_suffix} /firmware ro
     # Load ADSP firmware for PMIC
-    wait /sys/kernel/boot_adsp/ssr 1
+    wait /sys/kernel/boot_adsp/ssr 0.5
     write /sys/kernel/boot_adsp/ssr 1
-    wait /sys/class/power_supply/battery 1
+    wait /sys/class/power_supply/battery 0.5
     start vendor.health-default
     umount /vendor
     symlink /firmware /vendor/firmware_mnt
