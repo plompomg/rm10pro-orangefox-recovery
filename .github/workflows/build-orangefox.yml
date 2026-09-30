@@ -48,7 +48,8 @@ jobs:
             lib32z1-dev lz4 libncurses-dev libsdl1.2-dev \
             libssl-dev libwxgtk3.0-gtk3-dev libxml2-dev \
             libxml2-utils lzop pngcrush rsync schedtool \
-            squashfs-tools xsltproc zip zlib1g-dev openjdk-11-jdk
+            squashfs-tools xsltproc zip zlib1g-dev openjdk-11-jdk \
+          sudo apt-get install -y ccache
   job-2:
     runs-on: ubuntu-22.04
     needs: job-1
