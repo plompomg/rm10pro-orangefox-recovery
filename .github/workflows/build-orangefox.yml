@@ -145,9 +145,3 @@ jobs:
           prerelease: ${{ inputs.BUILD_TYPE != 'userdebug' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  job-1:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - run: echo "Hello, World!"
-run-name: null
