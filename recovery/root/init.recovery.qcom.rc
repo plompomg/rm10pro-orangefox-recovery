@@ -28,7 +28,7 @@
 on init
     stop keystore2
     stop vendor.keymint-qti
-    stop vendor.health-default
+    start vendor.health-default
     stop hwservicemanager
     start vendor.boot-qti
     setprop prepdecrypt.setpatch true

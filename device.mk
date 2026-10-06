@@ -56,8 +56,15 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/prebuilt/system/lib64/libkeystore2_crypto.so:$(TARGET_COPY_OUT_RECOVERY)/root/system/lib64/libkeystore2_crypto.so \
     $(DEVICE_PATH)/prebuilt/system/lib64/libkm_compat_service.so:$(TARGET_COPY_OUT_RECOVERY)/root/system/lib64/libkm_compat_service.so \
     $(DEVICE_PATH)/prebuilt/system/lib64/libbinder_ndk.so:$(TARGET_COPY_OUT_RECOVERY)/root/system/lib64/libbinder_ndk.so \
-    $(DEVICE_PATH)/prebuilt/system/etc/vintf/manifest.xml:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/vintf/manifest.xml
-
+    $(DEVICE_PATH)/prebuilt/system/etc/vintf/manifest.xml:$(TARGET_COPY_OUT_RECOVERY)/root/system/etc/vintf/manifest.xml \
+	$(DEVICE_PATH)/prebuilt/vendor/bin/hw/android.hardware.health-service.qti:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/bin/hw/android.hardware.health-service.qti \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/android.hardware.health-V1-ndk.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/android.hardware.health-V1-ndk.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/android.hardware.health-V3-ndk.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/android.hardware.health-V3-ndk.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/android.hardware.health@1.0.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/android.hardware.health@1.0.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/android.hardware.health@2.0.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/android.hardware.health@2.0.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/android.hardware.health@2.1.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/android.hardware.health@2.1.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/libsystem_health_mon2.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/libsystem_health_mon2.so \
+	$(DEVICE_PATH)/prebuilt/vendor/lib64/vendor.qti.syshealthmon-V1-ndk.so:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/lib64/vendor.qti.syshealthmon-V1-ndk.so 
 # Init scripts
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/recovery/root/init.recovery.qcom.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.qcom.rc \
