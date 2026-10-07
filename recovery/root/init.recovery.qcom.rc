@@ -32,6 +32,7 @@ on init
     stop hwservicemanager
     start vendor.boot-qti
     setprop prepdecrypt.setpatch true
+    symlink /sys/class/power_supply/zte_battery /sys/class/power_supply/battery
 
 on early-fs
     write /proc/sys/walt/sched_lib_name "recovery,magiskboot,Updater,updater,update_engine_sideload"
