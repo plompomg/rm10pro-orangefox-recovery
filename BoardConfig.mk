@@ -230,3 +230,4 @@ TW_NO_SCREEN_TIMEOUT := true
 TW_BATTERY_SYSFS_WAIT_SECONDS := 0
 TW_NO_BIND_SYSTEM_SERVICES := true
 #TW_NO_BATT_PERCENT := true
+RECOVERY_BINARY_SOURCE_FILES += $(DEVICE_PATH)/prebuilt/vendor/bin/hw/android.hardware.health-service.qti
