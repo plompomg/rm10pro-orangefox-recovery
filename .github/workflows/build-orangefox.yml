@@ -85,6 +85,15 @@ jobs:
           lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
           make -j4 adbd recoveryimage 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+      - name: Verify health binary patch
+        run: |
+          BINARY=~/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti
+          if grep -qboa "zte_bat" "$BINARY"; then
+            echo "✅ Patch confirmed in output binary"
+          else
+            echo "❌ Patch NOT found - binary was overwritten by build system"
+            grep -boa "battery/capacity" "$BINARY" | head -5
+          fi
       - name: Check build output
         run: |
           if [ ! -f ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img ]; then
