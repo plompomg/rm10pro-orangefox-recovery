@@ -85,6 +85,29 @@ jobs:
           lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
           make -j4 adbd recoveryimage 2>&1 | tee build.log
           echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
+      - name: Patch health binary
+        run: |
+          BINARY=~/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti
+          python3 << 'EOF'
+          import sys
+          path = "/home/runner/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti"
+          with open(path, 'rb') as f:
+              data = bytearray(f.read())
+          patch = b'zte_bat'
+          offsets = [21828, 22808, 24152, 25448, 31812]
+          for offset in offsets:
+              data[offset:offset+7] = patch
+          with open(path, 'wb') as f:
+              f.write(data)
+          print("Patch applied successfully")
+          EOF
+
+      - name: Repackage recovery image
+        run: |
+          cd ~/fox_14.1
+          source build/envsetup.sh
+          lunch orangefox_NX789J-ap2a-eng
+          make -j4 recoveryimage 2>&1 | tail -20
       - name: Verify health binary patch
         run: |
           BINARY=~/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti
