@@ -32,7 +32,8 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       FOX_DIR: /home/runner/fox_${{ inputs.SYNC_BRANCH }}
-      CCACHE_DIR: /home/runner/ccache
+      # Must live inside out/: the Android build sandbox makes everything else read-only
+      CCACHE_DIR: /home/runner/fox_${{ inputs.SYNC_BRANCH }}/out/ccache
     defaults:
       run:
         # explicit bash enables pipefail, so a failed make | tee fails the step
@@ -69,23 +70,6 @@ jobs:
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      # Restore first, then configure, so the size limit applies to the restored cache.
-      - name: Restore ccache
-        uses: actions/cache/restore@v4
-        with:
-          path: /home/runner/ccache
-          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.run_id }}
-          restore-keys: |
-            ccache-orangefox-${{ inputs.SYNC_BRANCH }}-
-
-      - name: Configure ccache
-        run: |
-          mkdir -p "$CCACHE_DIR"
-          echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
-          # GitHub allows 10 GB of cache per repo in total, so keep this well under it
-          ccache -M 5G
-
       - name: Sync OrangeFox source
         run: |
           git clone https://gitlab.com/OrangeFox/sync.git ~/OrangeFox_sync
@@ -99,6 +83,24 @@ jobs:
           # Windows download markers break the build (colon in filename), so remove any that got committed
           find "$FOX_DIR/device/nubia/NX789J" -name '*:Zone.Identifier' -print -delete
 
+      # Restore after the sync so the tree already exists, then configure ccache inside out/
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.FOX_DIR }}/out/ccache
+          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-orangefox-${{ inputs.SYNC_BRANCH }}-
+
+      - name: Configure ccache
+        run: |
+          mkdir -p "$CCACHE_DIR"
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          # GitHub allows 10 GB of cache per repo in total, so keep this well under it
+          ccache -M 5G
+          ccache -o compression=true
+
       - name: Build OrangeFox
         run: |
           cd "$FOX_DIR"
@@ -111,7 +113,7 @@ jobs:
         if: always()
         uses: actions/cache/save@v4
         with:
-          path: /home/runner/ccache
+          path: ${{ env.FOX_DIR }}/out/ccache
           key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.run_id }}
 
       - name: Check build output
