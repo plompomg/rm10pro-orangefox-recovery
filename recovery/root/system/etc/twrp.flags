@@ -5,7 +5,7 @@
 # mount point          fstype  device                                     device2                 flags
 
 # Logical partitions
-/vendor_dlkm    ext4  /dev/block/bootdevice/by-name/vendor_dlkm    flags=display="vendor boot";backup=1;flashimg;slotselect
+/vendor_dlkm    ext4  /dev/block/bootdevice/by-name/vendor_dlkm    flags=display="vendor dlkm";backup=1;flashimg;slotselect
 
 # Physical partitions (flashable images, A/B)
 /boot           emmc  /dev/block/bootdevice/by-name/boot           flags=display="Boot";backup=1;flashimg=1;slotselect
