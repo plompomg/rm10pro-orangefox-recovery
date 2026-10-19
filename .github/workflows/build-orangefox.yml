@@ -22,20 +22,32 @@ on:
         default: false
         type: boolean
 
+# Needed so the release step is allowed to create a release/tag.
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build OrangeFox for NX789J
     runs-on: ubuntu-22.04
+    env:
+      FOX_DIR: /home/runner/fox_${{ inputs.SYNC_BRANCH }}
+      CCACHE_DIR: /home/runner/ccache
+    defaults:
+      run:
+        # explicit bash enables pipefail, so a failed make | tee fails the step
+        shell: bash
     steps:
       - name: Free up disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
           sudo apt-get clean
-          df -h
+          df -h /
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install -y --no-install-recommends \
             git curl wget python3 python-is-python3 \
             bc bison build-essential ccache flex \
             g++-multilib gcc-multilib gnupg gperf \
@@ -44,109 +56,103 @@ jobs:
             libssl-dev libwxgtk3.0-gtk3-dev libxml2-dev \
             libxml2-utils lzop pngcrush rsync schedtool \
             squashfs-tools xsltproc zip zlib1g-dev openjdk-11-jdk
+
       - name: Set up git identity
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+
       - name: Install repo tool
         run: |
           mkdir -p ~/bin
-          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
-      - name: Set up ccache
-        run: |
-          mkdir -p /home/runner/ccache
-          echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_EXEC=$(which ccache)"
-          echo "CCACHE_DIR=/home/runner/ccache" >> $GITHUB_ENV
-          >> $GITHUB_ENV
-          ccache -M 10G
-      - name: Cache ccache
-        uses: actions/cache@v4
+
+      # Restore first, then configure, so the size limit applies to the restored cache.
+      - name: Restore ccache
+        uses: actions/cache/restore@v4
         with:
           path: /home/runner/ccache
-          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.sha }}
+          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.run_id }}
           restore-keys: |
             ccache-orangefox-${{ inputs.SYNC_BRANCH }}-
+
+      - name: Configure ccache
+        run: |
+          mkdir -p "$CCACHE_DIR"
+          echo "USE_CCACHE=1" >> $GITHUB_ENV
+          echo "CCACHE_EXEC=$(which ccache)" >> $GITHUB_ENV
+          # GitHub allows 10 GB of cache per repo in total, so keep this well under it
+          ccache -M 5G
+
       - name: Sync OrangeFox source
         run: |
           git clone https://gitlab.com/OrangeFox/sync.git ~/OrangeFox_sync
           cd ~/OrangeFox_sync
-          ./orangefox_sync.sh --branch ${{ inputs.SYNC_BRANCH }} --path ~/fox_${{ inputs.SYNC_BRANCH }} -j$(nproc) --shallow-clone
+          ./orangefox_sync.sh --branch ${{ inputs.SYNC_BRANCH }} --path "$FOX_DIR" -j$(nproc) --shallow-clone
+
       - name: Place device tree
         run: |
-          mkdir -p ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia
-          git clone https://github.com/plompomg/rm10pro-orangefox-recovery ~/fox_${{ inputs.SYNC_BRANCH }}/device/nubia/NX789J
+          mkdir -p "$FOX_DIR/device/nubia"
+          git clone --depth 1 https://github.com/plompomg/rm10pro-orangefox-recovery "$FOX_DIR/device/nubia/NX789J"
+          # Windows download markers break the build (colon in filename), so remove any that got committed
+          find "$FOX_DIR/device/nubia/NX789J" -name '*:Zone.Identifier' -print -delete
+
       - name: Build OrangeFox
         run: |
-          cd ~/fox_${{ inputs.SYNC_BRANCH }}
+          cd "$FOX_DIR"
           source build/envsetup.sh
           lunch orangefox_NX789J-ap2a-${{ inputs.BUILD_TYPE }}
-          make -j4 adbd recoveryimage 2>&1 | tee build.log
-          echo "BUILD_EXIT=${PIPESTATUS[0]}" >> $GITHUB_ENV
-      - name: Patch health binary
-        run: |
-          BINARY=~/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti
-          python3 << 'EOF'
-          import sys
-          path = "/home/runner/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti"
-          with open(path, 'rb') as f:
-              data = bytearray(f.read())
-          patch = b'zte_bat'
-          offsets = [21828, 22808, 24152, 25448, 31812]
-          for offset in offsets:
-              data[offset:offset+7] = patch
-          with open(path, 'wb') as f:
-              f.write(data)
-          print("Patch applied successfully")
-          EOF
+          make -j$(nproc) adbd recoveryimage 2>&1 | tee build.log
 
-      - name: Repackage recovery image
-        run: |
-          cd ~/fox_14.1
-          source build/envsetup.sh
-          lunch orangefox_NX789J-ap2a-eng
-          make -j4 recoveryimage 2>&1 | tail -20
-      - name: Verify health binary patch
-        run: |
-          BINARY=~/fox_14.1/out/target/product/NX789J/recovery/root/vendor/bin/hw/android.hardware.health-service.qti
-          if grep -qboa "zte_bat" "$BINARY"; then
-            echo "✅ Patch confirmed in output binary"
-          else
-            echo "❌ Patch NOT found - binary was overwritten by build system"
-            grep -boa "battery/capacity" "$BINARY" | head -5
-          fi
+      # Save the cache even when the build fails, so the next run isn't starting cold.
+      - name: Save ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /home/runner/ccache
+          key: ccache-orangefox-${{ inputs.SYNC_BRANCH }}-${{ github.run_id }}
+
       - name: Check build output
         run: |
-          if [ ! -f ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img ]; then
+          IMG="$FOX_DIR/out/target/product/NX789J/recovery.img"
+          if [ ! -f "$IMG" ]; then
             echo "Build failed - recovery.img not found"
             exit 1
           fi
           echo "Build successful!"
-          ls -lh ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img
+          ls -lh "$IMG"
+
       - name: Rename output
         run: |
           DATE=$(date +%Y%m%d)
-          cp ~/fox_${{ inputs.SYNC_BRANCH }}/out/target/product/NX789J/recovery.img \
-             ~/OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img
-          echo "IMG_PATH=$HOME/OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img" >> $GITHUB_ENV
-          echo "IMG_NAME=OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img" >> $GITHUB_ENV
+          NAME="OrangeFox-${{ inputs.SYNC_BRANCH }}-NX789J-$DATE.img"
+          cp "$FOX_DIR/out/target/product/NX789J/recovery.img" "$HOME/$NAME"
+          echo "BUILD_DATE=$DATE" >> $GITHUB_ENV
+          echo "IMG_PATH=$HOME/$NAME" >> $GITHUB_ENV
+          echo "IMG_NAME=$NAME" >> $GITHUB_ENV
+
       - name: Upload recovery image as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.IMG_NAME }}
           path: ${{ env.IMG_PATH }}
           retention-days: 7
-      - if: always()
-        name: Upload build log as artifact
+
+      - name: Upload build log as artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: ~/fox_${{ inputs.SYNC_BRANCH }}/build.log
+          path: ${{ env.FOX_DIR }}/build.log
           retention-days: 7
-      - if: ${{ inputs.RELEASE_BUILD == 'true' }}
-        name: Create GitHub release
+          if-no-files-found: ignore
+
+      # RELEASE_BUILD is a real boolean, so don't compare it to the string 'true'
+      # (that comparison is always false, which is why this step was being skipped).
+      - name: Create GitHub release
+        if: ${{ inputs.RELEASE_BUILD }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: OFR-${{ inputs.SYNC_BRANCH }}-${{ github.run_number }}
@@ -156,15 +162,10 @@ jobs:
 
             **Branch:** ${{ inputs.SYNC_BRANCH }}
             **Build type:** ${{ inputs.BUILD_TYPE }}
-            **Date:** ${{ github.run_number }}
+            **Date:** ${{ env.BUILD_DATE }}
 
-            ### Flashing Instructions
-            ```bash
-            adb push OrangeFox-*.img /sdcard/recovery.img
-            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_a
-            adb shell dd if=/sdcard/recovery.img of=/dev/block/bootdevice/by-name/recovery_b
-            adb reboot recovery
-            ```
+            ### Testing
+            Boot the image once before flashing anything permanently, and keep fastboot access available.
 
             ### Status
             - ✅ OrangeFox UI
