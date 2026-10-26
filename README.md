@@ -1,6 +1,6 @@
 # OrangeFox Recovery — Nubia RedMagic 10 Pro (NX789J)
 
-### there,s news about vendor_boot not flashing, i,m going to test that after ive fixed the ui bug 
+# if i don't respond to any issues on github then you can directly contact me at @imbored_10 on whatsapp
 
 > First working OrangeFox build for the RedMagic 10 Pro, including functional decryption.
 
